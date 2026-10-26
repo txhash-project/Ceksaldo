@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F172A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>CekSaldo & Tarif Tol (100% Gratis)</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-border: #334155;
+    --primary: #38bdf8;
+    --primary-dark: #0284c7;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
+  header {
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--card-border);
+    position: sticky; top: 0; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #38bdf8, #6366f1);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: white;
+  }
+  .badge-free {
+    background: rgba(34, 197, 94, 0.15); color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+  }
+  .container { max-width: 480px; margin: 0 auto; padding: 16px; }
+  
+  /* Virtual E-Money Card */
+  .emoney-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #0f172a 100%);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px; padding: 22px;
+    box-shadow: 0 12px 30px -10px rgba(0,0,0,0.6);
+    position: relative; overflow: hidden; margin-bottom: 18px;
+  }
+  .emoney-card::after {
+    content: ""; position: absolute; right: -40px; top: -40px;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.2) 0%, transparent 70%);
+  }
+  .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .card-issuer { font-size: 14px; font-weight: 700; letter-spacing: 0.5px; color: #bae6fd; text-transform: uppercase; }
+  .nfc-waves { font-size: 18px; color: #38bdf8; }
+  .balance-label { font-size: 12px; color: #cbd5e1; margin-bottom: 4px; }
+  .balance-amount { font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 16px; color: #fff; }
+  .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; color: #94a3b8; }
+  .card-uid { font-family: monospace; font-size: 13px; color: #e2e8f0; }
+
+  /* Buttons & Inputs */
+  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .btn {
+    border: none; outline: none; cursor: pointer;
+    padding: 13px 16px; border-radius: 12px;
+    font-weight: 700; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform 0.12s ease, opacity 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, #0ea5e9, #2563eb); color: white; }
+  .btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--card-border); }
+  .btn-full { width: 100%; margin-top: 10px; }
+
+  /* Section Box */
+  .box {
+    background: var(--card); border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px;
+  }
+  .box-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .form-group { margin-bottom: 12px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  select, input {
+    width: 100%; padding: 12px; border-radius: 10px;
+    background: #0f172a; border: 1px solid var(--card-border);
+    color: var(--text); font-size: 14px; outline: none;
+  }
+  select:focus, input:focus { border-color: var(--primary); }
+
+  /* Golongan Chips */
+  .gol-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+  .gol-chip {
+    background: #0f172a; border: 1px solid var(--card-border);
+    border-radius: 10px; padding: 8px 4px; text-align: center; cursor: pointer;
+  }
+  .gol-chip.active { background: rgba(56, 189, 248, 0.18); border-color: var(--primary); color: var(--primary); font-weight: 700; }
+  .gol-chip span { display: block; font-size: 12px; }
+  .gol-chip small { font-size: 9px; color: var(--muted); }
+
+  /* Route List */
+  .route-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; background: #0f172a; border-radius: 10px;
+    margin-bottom: 8px; border: 1px solid var(--card-border);
+  }
+  .route-info h4 { font-size: 13px; margin-bottom: 2px; }
+  .route-info p { font-size: 11px; color: var(--muted); }
+  .route-price { font-weight: 700; font-size: 14px; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+  .remove-btn { background: rgba(239,68,68,0.15); color: #f87171; border: none; width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+  /* Status Banner */
+  .status-banner {
+    padding: 14px; border-radius: 12px; margin-top: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .status-ok { background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.35); color: #4ade80; }
+  .status-low { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #f87171; }
+
+  /* Bottom Nav */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--card-border);
+    display: flex; justify-content: space-around; padding: 10px 0; z-index: 50;
+  }
+  .nav-item {
+    color: var(--muted); text-decoration: none; font-size: 11px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer;
+    background: none; border: none;
+  }
+  .nav-item.active { color: var(--primary); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .toast {
+    position: fixed; bottom: 75px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; color: #fff; border: 1px solid #38bdf8;
+    padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: none; z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">CS</div>
+    <div>
+      <div style="font-weight:800; font-size:16px;">CekSaldo & Tol</div>
+      <div style="font-size:11px; color:var(--muted);">NFC Reader & Kalkulator Tol</div>
+    </div>
+  </div>
+  <span class="badge-free">100% GRATIS</span>
+</header>
+
+<div class="container">
+  <!-- Virtual Card Always Visible -->
+  <div class="emoney-card">
+    <div class="card-top">
+      <div class="card-issuer" id="cardIssuer">MANDIRI E-MONEY / FLAZZ / TAPCASH</div>
+      <div class="nfc-waves">((( • )))</div>
+    </div>
+    <div class="balance-label">Saldo Kartu Saat Ini</div>
+    <div class="balance-amount" id="cardBalanceDisplay">Rp 150.000</div>
+    <div class="card-bottom">
+      <div>
+        <div style="font-size:10px; opacity:0.7;">NOMOR KARTU / UID</div>
+        <div class="card-uid" id="cardUidDisplay">•••• •••• •••• 8492</div>
+      </div>
+      <div id="lastScanTime">Siap Scan NFC</div>
+    </div>
+  </div>
+
+  <!-- TAB 1: CEK SALDO & NFC -->
+  <div id="tab-nfc" class="tab-content active">
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startNfcScan()">
+        <span>📡</span> Scan Kartu NFC
+      </button>
+      <button class="btn btn-secondary" onclick="promptManualBalance()">
+        <span>✏️</span> Atur Saldo Manual
+      </button>
+    </div>
+
+    <div class="box">
+      <div class="box-title">
+        <span>Pilih Jenis Kartu E-Money</span>
+      </div>
+      <div class="form-group">
+        <select id="issuerSelect" onchange="updateIssuer()">
+          <option value="Mandiri e-Money">Mandiri e-Money</option>
+          <option value="BCA Flazz (Gen 1 & 2)">BCA Flazz (Gen 1 & 2)</option>
+          <option value="BNI TapCash">BNI TapCash</option>
+          <option value="BRI Brizzi">BRI Brizzi</option>
+          <option value="DKI JakCard">DKI JakCard</option>
+        </select>
+      </div>
+      <div style="font-size:12px; color:var(--muted); line-height:1.5;">
+        💡 <b>Cara Scan NFC:</b> Aktifkan fitur <b>NFC</b> di pengaturan HP Android Anda, klik <b>Scan Kartu NFC</b>, lalu tempelkan kartu e-Money di bagian belakang HP dan tahan 2 detik.
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-title">
+        <span>Riwayat Pengecekan Saldo</span>
+        <button onclick="clearHistory()" style="background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;">Hapus</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: KALKULATOR TARIF TOL -->
+  <div id="tab-tol" class="tab-content">
+    <div class="box">
+      <div class="box-title">1. Pilih Golongan Kendaraan</div>
+      <div class="gol-grid" id="golGrid">
+        <div class="gol-chip active" onclick="selectGol(1)"><span>Gol I</span><small>Mobil/Bus</small></div>
+        <div class="gol-chip" onclick="selectGol(2)"><span>Gol II</span><small>Truk 2 Gandar</small></div>
+        <div class="gol-chip" onclick="selectGol(3)"><span>Gol III</span><small>Truk 3 Gandar</small></div>
+        <div class="gol-chip" onclick="selectGol(4)"><span>Gol IV</span><small>Truk 4 Gandar</small></div>
+        <div class="gol-chip" onclick="selectGol(5)"><span>Gol V</span><small>Truk 5 Gandar</small></div>
+      </div>
+
+      <div class="box-title" style="margin-top:14px;">2. Tambah Ruas Jalan Tol</div>
+      <div class="form-group">
+        <label>Pilih Ruas Tol</label>
+        <select id="tollSelect"></select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="addTollRoute()">+ Tambah ke Rute Perjalanan</button>
+    </div>
+
+    <div class="box">
+      <div class="box-title">
+        <span>Rencana Perjalanan Tol</span>
+        <button onclick="clearRoutes()" style="background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;">Reset Rute</button>
+      </div>
+      <div id="selectedRoutesList"></div>
+
+      <div style="border-top:1px solid var(--card-border); padding-top:12px; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:13px; color:var(--muted);">Total Estimasi Tarif Tol:</span>
+        <span style="font-size:20px; font-weight:800; color:var(--primary);" id="totalTollDisplay">Rp 0</span>
+      </div>
+
+      <div id="sufficiencyBanner" class="status-banner status-ok">
+        <div>
+          <div style="font-weight:700; font-size:13px;" id="suffTitle">✅ Saldo Mencukupi</div>
+          <div style="font-size:11px; opacity:0.85;" id="suffDesc">Sisa saldo setelah tol: Rp 150.000</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-nfc" onclick="switchTab('nfc')">
+    <span style="font-size:18px;">💳</span>
+    <span>Cek Saldo NFC</span>
+  </button>
+  <button class="nav-item" id="nav-tol" onclick="switchTab('tol')">
+    <span style="font-size:18px;">🛣️</span>
+    <span>Kalkulator Tol</span>
+  </button>
+</nav>
+
+<script>
+const TOLL_DATA = [
+  { id: 1, name: "Jakarta - Cikampek (Japek)", region: "Jabodetabek / Jabar", rates: [27000, 40500, 40500, 54000, 54000] },
+  { id: 2, name: "Cikopo - Palimanan (Cipali)", region: "Trans Jawa", rates: [119000, 196000, 196000, 246000, 246000] },
+  { id: 3, name: "Palimanan - Kanci (Palikanci)", region: "Trans Jawa", rates: [13500, 19500, 19500, 32000, 32000] },
+  { id: 4, name: "Kanci - Pejagan", region: "Trans Jawa", rates: [31500, 47500, 47500, 63500, 63500] },
+  { id: 5, name: "Pejagan - Pemalang", region: "Trans Jawa", rates: [66000, 99000, 99000, 132000, 132000] },
+  { id: 6, name: "Pemalang - Batang", region: "Trans Jawa", rates: [53000, 79500, 79500, 106000, 106000] },
+  { id: 7, name: "Batang - Semarang (Kalikangkung)", region: "Trans Jawa", rates: [111500, 167500, 167500, 223000, 223000] },
+  { id: 8, name: "Semarang ABC (Dalam Kota)", region: "Trans Jawa", rates: [5500, 8000, 8000, 10500, 10500] },
+  { id: 9, name: "Semarang - Solo", region: "Trans Jawa", rates: [92000, 138500, 138500, 184500, 184500] },
+  { id: 10, name: "Solo - Ngawi", region: "Trans Jawa", rates: [131000, 196000, 196000, 261500, 261500] },
+  { id: 11, name: "Ngawi - Kertosono", region: "Trans Jawa", rates: [98000, 147000, 147000, 196000, 196000] },
+  { id: 12, name: "Kertosono - Mojokerto", region: "Trans Jawa", rates: [55000, 92000, 92000, 115000, 115000] },
+  { id: 13, name: "Surabaya - Mojokerto (Sumo)", region: "Trans Jawa", rates: [43500, 72500, 72500, 108500, 108500] },
+  { id: 14, name: "Surabaya - Gempol (Kejapanan)", region: "Jawa Timur", rates: [10000, 15000, 15000, 20000, 20000] },
+  { id: 15, name: "Gempol - Pandaan", region: "Jawa Timur", rates: [14500, 24500, 24500, 31000, 31000] },
+  { id: 16, name: "Pandaan - Malang", region: "Jawa Timur", rates: [35500, 53500, 53500, 71000, 71000] },
+  { id: 17, name: "Gempol - Pasuruan (Grati)", region: "Jawa Timur", rates: [46500, 69500, 69500, 93000, 93000] },
+  { id: 18, name: "Pasuruan - Probolinggo (Gending)", region: "Jawa Timur", rates: [52000, 78000, 78000, 104000, 104000] },
+  { id: 19, name: "Tol Dalam Kota Jakarta", region: "Jabodetabek", rates: [11000, 16500, 16500, 19000, 19000] },
+  { id: 20, name: "JORR (Jakarta Outer Ring Road)", region: "Jabodetabek", rates: [17000, 25000, 25000, 33500, 33500] },
+  { id: 21, name: "Jagorawi (Jakarta - Bogor - Ciawi)", region: "Jabodetabek", rates: [7500, 12000, 12000, 17000, 17000] },
+  { id: 22, name: "Cipularang (SS Dawuan - Padalarang)", region: "Jawa Barat", rates: [45000, 76000, 76000, 110000, 110000] },
+  { id: 23, name: "Padaleunyi (Padalarang - Cileunyi)", region: "Jawa Barat", rates: [10500, 18500, 18500, 25000, 25000] },
+  { id: 24, name: "Cisumdawu (Cileunyi - Dawuan)", region: "Jawa Barat", rates: [78500, 118000, 118000, 157500, 157500] },
+  { id: 25, name: "Bakauheni - Terbanggi Besar", region: "Trans Sumatera", rates: [189500, 284500, 284500, 379000, 379000] },
+  { id: 26, name: "Terbanggi Besar - Palembang", region: "Trans Sumatera", rates: [205000, 307500, 307500, 410500, 410500] },
+  { id: 27, name: "Pekanbaru - Dumai", region: "Trans Sumatera", rates: [171500, 257000, 257000, 343000, 343000] },
+  { id: 28, name: "Bali Mandara (Mobil)", region: "Bali", rates: [14000, 21000, 21000, 28000, 28000] }
+];
+
+let state = {
+  balance: parseInt(localStorage.getItem('cs_balance') || '150000', 10),
+  issuer: localStorage.getItem('cs_issuer') || 'Mandiri e-Money',
+  uid: localStorage.getItem('cs_uid') || '04A2 91B0 772C 84',
+  golongan: 1,
+  selectedRoutes: JSON.parse(localStorage.getItem('cs_routes') || '[1, 2]'),
+  history: JSON.parse(localStorage.getItem('cs_history') || '[]')
+};
+
+function formatRp(num) {
+  return 'Rp ' + Number(num).toLocaleString('id-ID');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2800);
+}
+
+function saveState() {
+  localStorage.setItem('cs_balance', state.balance);
+  localStorage.setItem('cs_issuer', state.issuer);
+  localStorage.setItem('cs_uid', state.uid);
+  localStorage.setItem('cs_routes', JSON.stringify(state.selectedRoutes));
+  localStorage.setItem('cs_history', JSON.stringify(state.history));
+}
+
+function renderAll() {
+  document.getElementById('cardIssuer').textContent = state.issuer;
+  document.getElementById('issuerSelect').value = state.issuer;
+  document.getElementById('cardBalanceDisplay').textContent = formatRp(state.balance);
+  document.getElementById('cardUidDisplay').textContent = state.uid;
+
+  // Render History
+  const hEl = document.getElementById('historyList');
+  if (state.history.length === 0) {
+    hEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">Belum ada riwayat pengecekan kartu.</div>';
+  } else {
+    hEl.innerHTML = state.history.slice(0, 8).map(item => `
+      <div class="route-item">
+        <div class="route-info">
+          <h4>${item.issuer} (${item.uid})</h4>
+          <p>${item.time}</p>
+        </div>
+        <div class="route-price">${formatRp(item.balance)}</div>
+      </div>
+    `).join('');
+  }
+
+  // Render Selected Routes
+  const rEl = document.getElementById('selectedRoutesList');
+  let totalToll = 0;
+  if (state.selectedRoutes.length === 0) {
+    rEl.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">Belum ada ruas tol yang dipilih.</div>';
+  } else {
+    rEl.innerHTML = state.selectedRoutes.map((routeId, idx) => {
+      const road = TOLL_DATA.find(r => r.id === routeId);
+      if (!road) return '';
+      const price = road.rates[state.golongan - 1];
+      totalToll += price;
+      return `
+        <div class="route-item">
+          <div class="route-info">
+            <h4>${road.name}</h4>
+            <p>${road.region} • Golongan ${state.golongan}</p>
+          </div>
+          <div class="route-price">
+            <span>${formatRp(price)}</span>
+            <button class="remove-btn" onclick="removeRoute(${idx})">×</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('totalTollDisplay').textContent = formatRp(totalToll);
+
+  const banner = document.getElementById('sufficiencyBanner');
+  const diff = state.balance - totalToll;
+  if (diff >= 0) {
+    banner.className = 'status-banner status-ok';
+    document.getElementById('suffTitle').textContent = '✅ Saldo Kartu Mencukupi';
+    document.getElementById('suffDesc').textContent = 'Estimasi sisa saldo setelah tol: ' + formatRp(diff);
+  } else {
+    banner.className = 'status-banner status-low';
+    document.getElementById('suffTitle').textContent = '⚠️ Saldo Kurang ' + formatRp(Math.abs(diff));
+    document.getElementById('suffDesc').textContent = 'Segera top-up minimal ' + formatRp(Math.abs(diff)) + ' sebelum masuk gerbang tol.';
+  }
+}
+
+function populateTollDropdown() {
+  const sel = document.getElementById('tollSelect');
+  sel.innerHTML = TOLL_DATA.map(r => `<option value="${r.id}">${r.name} (${formatRp(r.rates[state.golongan - 1])})</option>`).join('');
+}
+
+function selectGol(gol) {
+  state.golongan = gol;
+  document.querySelectorAll('.gol-chip').forEach((el, idx) => {
+    el.classList.toggle('active', idx + 1 === gol);
+  });
+  populateTollDropdown();
+  renderAll();
+}
+
+function addTollRoute() {
+  const id = parseInt(document.getElementById('tollSelect').value, 10);
+  state.selectedRoutes.push(id);
+  saveState();
+  renderAll();
+  showToast('Ruas tol ditambahkan');
+}
+
+function removeRoute(idx) {
+  state.selectedRoutes.splice(idx, 1);
+  saveState();
+  renderAll();
+}
+
+function clearRoutes() {
+  state.selectedRoutes = [];
+  saveState();
+  renderAll();
+}
+
+function updateIssuer() {
+  state.issuer = document.getElementById('issuerSelect').value;
+  saveState();
+  renderAll();
+}
+
+function promptManualBalance() {
+  const input = prompt('Masukkan nominal saldo kartu Anda saat ini (angka saja, contoh: 250000):', state.balance);
+  if (input !== null) {
+    const val = parseInt(input.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(val)) {
+      state.balance = val;
+      recordHistory(state.issuer, state.uid, state.balance);
+      saveState();
+      renderAll();
+      showToast('Saldo berhasil diperbarui!');
+    }
+  }
+}
+
+function recordHistory(issuer, uid, balance) {
+  const now = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+  state.history.unshift({ issuer, uid, balance, time: now });
+  if (state.history.length > 20) state.history.pop();
+}
+
+function clearHistory() {
+  state.history = [];
+  saveState();
+  renderAll();
+}
+
+// Native Android Bridge + Web NFC API Handler
+async function startNfcScan() {
+  // Check if running inside our Native Android APK WebView Bridge
+  if (window.AndroidNfcBridge && window.AndroidNfcBridge.triggerNfcCheck) {
+    window.AndroidNfcBridge.triggerNfcCheck();
+    showToast('Tempelkan kartu e-Money di belakang HP...');
+    return;
+  }
+
+  // Check if Web NFC API is supported (Chrome on Android)
+  if ('NDEFReader' in window) {
+    try {
+      const ndef = new NDEFReader();
+      await ndef.scan();
+      showToast('📡 NFC Aktif! Tempelkan kartu di belakang HP...');
+      ndef.onreading = event => {
+        const serial = event.serialNumber ? event.serialNumber.toUpperCase() : 'UID-TERDETEKSI';
+        onCardDetectedFromNative(serial, state.issuer, state.balance);
+      };
+      ndef.onreadingerror = () => {
+        showToast('Kartu NFC terdeteksi! Masukkan/konfirmasi saldo.');
+      };
+    } catch (err) {
+      showToast('Izin NFC diperlukan atau gunakan input saldo.');
+    }
+  } else {
+    showToast('Tempelkan kartu NFC (atau atur saldo manual di browser ini)');
+    promptManualBalance();
+  }
+}
+
+// Callback invoked by Native Android IsoDep APDU Reader in MainActivity.kt
+window.onCardDetectedFromNative = function(uid, detectedType, parsedBalance) {
+  state.uid = uid || state.uid;
+  if (detectedType) state.issuer = detectedType;
+  if (typeof parsedBalance === 'number' && parsedBalance >= 0) {
+    state.balance = parsedBalance;
+  }
+  document.getElementById('lastScanTime').textContent = 'Baru saja di-scan';
+  recordHistory(state.issuer, state.uid, state.balance);
+  saveState();
+  renderAll();
+  showToast('Kartu ' + state.issuer + ' terbaca!');
+};
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+}
+
+populateTollDropdown();
+if (state.history.length === 0) {
+  recordHistory(state.issuer, state.uid, state.balance);
+}
+renderAll();
+</script>
+</body>
+</html>
